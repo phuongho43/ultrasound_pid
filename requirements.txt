@@ -1,0 +1,6 @@
+certifi==2020.6.20
+pyserial==3.5
+pyusb==1.2.1
+PyVISA==1.11.3
+PyVISA-py==0.5.2
+typing_extensions==4.1.1
