@@ -29,6 +29,8 @@ class HH806(object):
         """
         try:
             self.ser = serial.Serial(serial_port, baudrate=19200, bytesize=8, parity='E', stopbits=1, timeout=1)
+            if self.ser.isOpen():
+                print('\nConnection OPEN\n')
         except serial.SerialException as e:
             print(e)
             raise
@@ -36,9 +38,16 @@ class HH806(object):
     def close_connection(self):
         try:
             self.ser.close()
+            print('\nConnection CLOSED\n')
         except Exception as e:
             print(e)
             raise
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close_connection()
 
     def read_temp(self):
         """
@@ -68,12 +77,11 @@ class HH806(object):
 
 if __name__ == '__main__':
     ta = time.time()
-    serial_port = '/dev/ttyUSB0'
-    dev = HH806(serial_port)
     tb = time.time()
-    while (tb - ta) < 60:
-        tb = time.time()
-        t1, t2 = dev.read_temp()
-        print(t1)
-        time.sleep(0.1)
-    dev.close_connection()
+    serial_port = '/dev/ttyUSB0'
+    with HH806(serial_port) as dev:
+        while (tb - ta) < 60:
+            tb = time.time()
+            t1, t2 = dev.read_temp()
+            print(t1)
+            time.sleep(0.1)

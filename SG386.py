@@ -9,7 +9,7 @@ class SG386(object):
     """
     def __init__(self, serial_port):
         self.open_connection(serial_port)
-        self.max_amp = 100
+        self.max_amp = 0.3  # Volt RMS
 
     def open_connection(self, serial_port):
         """
@@ -17,7 +17,8 @@ class SG386(object):
         """
         try:
             self.ser = serial.Serial(serial_port, baudrate=9600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, rtscts=True, timeout=1)
-            print('Connection is Open: ', self.ser.isOpen())
+            if self.ser.isOpen():
+                print('\nConnection OPEN\n')
         except serial.SerialException as e:
             print(e)
             raise
@@ -25,9 +26,16 @@ class SG386(object):
     def close_connection(self):
         try:
             self.ser.close()
+            print('\nConnection CLOSED\n')
         except Exception as e:
             print(e)
             raise
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close_connection()
 
     def get_identity(self):
         """
@@ -37,7 +45,7 @@ class SG386(object):
             self.ser.reset_input_buffer()
             self.ser.write(b'*IDN?\n')
             r = self.ser.readline()
-            return r
+            return r.decode('utf-8').strip()
         except serial.SerialException as e:
             print(e)
             raise
@@ -61,7 +69,7 @@ class SG386(object):
     def set_modulation_type(self, mtype):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'TYPE {}\n'.format(mtype))
+            self.ser.write('TYPE {}\n'.format(mtype).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -85,7 +93,7 @@ class SG386(object):
     def set_modulation_function(self, mfunc):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'MFNC {}\n'.format(mfunc))
+            self.ser.write('MFNC {}\n'.format(mfunc).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -109,7 +117,7 @@ class SG386(object):
     def set_frequency(self, freq):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'FREQ {}\n'.format(freq))
+            self.ser.write('FREQ {}\n'.format(freq).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -133,7 +141,7 @@ class SG386(object):
     def set_PRBS_pulse_period(self, bit_per):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'RPER {}\n'.format(bit_per))
+            self.ser.write('RPER {}\n'.format(bit_per).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -157,7 +165,7 @@ class SG386(object):
     def set_PRBS_pulse_length(self, bit_len):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'PRBS {}\n'.format(bit_len))
+            self.ser.write('PRBS {}\n'.format(bit_len).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -181,7 +189,7 @@ class SG386(object):
     def set_modulation_state(self, mstate):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'MODL {}\n'.format(mstate))
+            self.ser.write('MODL {}\n'.format(mstate).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -192,7 +200,7 @@ class SG386(object):
     def get_RF_amplitude(self):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'AMPR?\n')
+            self.ser.write(b'AMPR? RMS\n')
             r = self.ser.readline()
             return float(r)
         except serial.SerialException as e:
@@ -205,8 +213,8 @@ class SG386(object):
     def set_RF_amplitude(self, amp):
         try:
             self.ser.reset_input_buffer()
-            if amp < self.max_amp:
-                self.ser.write(b'AMPR {}\n'.format(amp))
+            if abs(float(amp)) <= self.max_amp:
+                self.ser.write('AMPR {} RMS\n'.format(amp).encode('utf-8'))
             else:
                 print('Output amplitude too high!')
         except serial.SerialException as e:
@@ -232,17 +240,34 @@ class SG386(object):
     def set_RF_state(self, rfstate):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'ENBR {}\n'.format(rfstate))
+            self.ser.write('ENBR {}\n'.format(rfstate).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
         except Exception as e:
             print(e)
             raise
+
+    def display_status(self):
+        status = {
+            'Device Identity': self.get_identity(),
+            'Modulation Type': self.get_modulation_type(),
+            'Modulation Function': self.get_modulation_function(),
+            'Signal Frequency': self.get_frequency(),
+            'PRBS Pulse Period': self.get_PRBS_pulse_period(),
+            'PRBS Pulse Length': self.get_PRBS_pulse_length(),
+            'Modulation State': self.get_modulation_state(),
+            'RF Amplitude': self.get_RF_amplitude(),
+            'RF State': self.get_RF_state()
+        }
+        print("{:<25} {:<10}".format('Parameter','Value'))
+        print('='*80)
+        for k, v in status.items():
+            # print(k, v)
+            print("{:<25} {:<10}".format(k, v))
             
 
 if __name__ == '__main__':
     serial_port = '/dev/ttyUSB0'
-    dev = SG386(serial_port)
-    dev.get_identity()
-    dev.close_connection()
+    with SG386(serial_port) as dev:
+        dev.display_status()
