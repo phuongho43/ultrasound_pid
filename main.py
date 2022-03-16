@@ -1,6 +1,7 @@
 import time
 import serial
 from serial.tools import list_ports
+from simple_pid import PID
 from HH806 import HH806
 from SG386 import SG386
 
@@ -19,18 +20,24 @@ if __name__ == '__main__':
         sig_gen.set_modulation_type(4)
         sig_gen.set_modulation_function(0)
         sig_gen.set_frequency(1e6)
-        sig_gen.set_PRBS_pulse_period(0.5)
-        sig_gen.set_PRBS_pulse_length(50)
+        sig_gen.set_pulse_period(0.5)
+        sig_gen.set_pulse_duty_factor(50)
         sig_gen.set_modulation_state(1)
-        output_volt = input('Starting Voltage Output (mVolts): ')
-        sig_gen.set_RF_amplitude(output_volt)
+        volt_0 = input('Starting Voltage Output (mVolts): ')
+        sig_gen.set_RF_amplitude(volt_0)
         sig_gen.display_status()
         print('-'*50)
-        t1, t2 = thermo.read_temp()
-        print("{:<25} {:<10}".format('Thermo Temperature', t1))
-        # target_temp = input('Target Temperature (deg C): ')
-        # stim_duration = input('Stimulation Duration (sec): ')
-        # input('Press ENTER to start ultrasound stimulation.')
-        # sig_gen.set_RF_state(1)
-
-
+        temp_0, _ = thermo.read_temp()
+        print("{:<25} {:<10}".format('Thermo Temperature', temp_0))
+        target_temp = input('Target Temperature (deg C): ')
+        stim_duration = input('Stimulation Duration (sec): ')
+        # pid_controller = PID(1, 0.1, 0.05, setpoint=target_temp, sample_time=1, output_limits=(0, 0.3))
+        input('Press ENTER to START ultrasound stimulation.')
+        sig_gen.set_RF_state(1)
+        t0 = time.time()
+        while time.time() - t0 < stim_duration:
+            temp_i, _ = thermo.read_temp()
+            volt_i = pid_controller(temp_i)
+            print(temp_i, volt_i)
+            # sig_gen.set_RF_amplitude(volt_i)
+        sig_gen.set_RF_state(0)

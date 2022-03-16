@@ -125,10 +125,10 @@ class SG386(object):
             print(e)
             raise
 
-    def get_PRBS_pulse_period(self):
+    def get_pulse_period(self):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'RPER?\n')
+            self.ser.write(b'PPER?\n')
             r = self.ser.readline()
             return float(r)
         except serial.SerialException as e:
@@ -138,10 +138,10 @@ class SG386(object):
             print(e)
             raise
 
-    def set_PRBS_pulse_period(self, bit_per):
+    def set_pulse_period(self, bit_per):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write('RPER {}\n'.format(bit_per).encode('utf-8'))
+            self.ser.write('PPER {}\n'.format(bit_per).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -149,10 +149,10 @@ class SG386(object):
             print(e)
             raise
 
-    def get_PRBS_pulse_length(self):
+    def get_pulse_duty_factor(self):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write(b'PRBS?\n')
+            self.ser.write(b'PDTY?\n')
             r = self.ser.readline()
             return float(r)
         except serial.SerialException as e:
@@ -162,10 +162,10 @@ class SG386(object):
             print(e)
             raise
 
-    def set_PRBS_pulse_length(self, bit_len):
+    def set_pulse_duty_factor(self, bit_len):
         try:
             self.ser.reset_input_buffer()
-            self.ser.write('PRBS {}\n'.format(bit_len).encode('utf-8'))
+            self.ser.write('PDTY {}\n'.format(bit_len).encode('utf-8'))
         except serial.SerialException as e:
             print(e)
             raise
@@ -254,8 +254,8 @@ class SG386(object):
             'Modulation Type': self.get_modulation_type(),
             'Modulation Function': self.get_modulation_function(),
             'Signal Frequency': self.get_frequency(),
-            'PRBS Pulse Period': self.get_PRBS_pulse_period(),
-            'PRBS Pulse Length': self.get_PRBS_pulse_length(),
+            'Pulse Period': self.get_pulse_period(),
+            'Pulse Duty Factor': self.get_pulse_duty_factor(),
             'Modulation State': self.get_modulation_state(),
             'RF Amplitude': self.get_RF_amplitude(),
             'RF State': self.get_RF_state()
