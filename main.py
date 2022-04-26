@@ -87,6 +87,9 @@ if __name__ == '__main__':
         while time.time() - t0 < stim_duration:
             time_i = time.time() - t0
             temp_i, _ = thermo.read_temp()
+            if temp_i > 50:
+                print('Temp > 50...Skipping...')
+                continue
             volt_i = pid_controller(temp_i)
             sig_gen.set_RF_amplitude(volt_i)
             time_data.append(time_i)
