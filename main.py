@@ -1,5 +1,7 @@
 import os
 import time
+import atexit
+
 import serial
 
 import numpy as np
@@ -54,8 +56,18 @@ def get_ports():
     ports = [port.device for port in list_ports.comports()]
     return ports
 
+def exit_handler():
+    data = {'time': time_data, 'temp': temp_data, 'volt': volt_data}
+    df = pd.DataFrame(data)
+    save_dir = os.path.join(root_dir, time.strftime('%Y%m%d_%H-%M-%S'))
+    setup_dirs(save_dir)
+    df.to_csv(os.path.join(save_dir, 'y.csv'), index=False)
+    plot_lines(save_dir, xvar='time', yvar='temp', xlabel='Time', ylabel='Temperature')
+    plot_lines(save_dir, xvar='time', yvar='volt', xlabel='Time', ylabel='Voltage')
+
 
 if __name__ == '__main__':
+    atexit.register(exit_handler)
     # ports = get_ports()
     # print(ports)
     root_dir = '/home/phuong/data/ultrasound_pid_data/'
@@ -97,10 +109,4 @@ if __name__ == '__main__':
             volt_data.append(volt_i)
             print("{:<25} {:<15} {:<10}".format('Elapsed Time', 'Temperature', 'Voltage'))
             print("{:<25} {:<15} {:<10}".format(round(time.time() - t0, 1), temp_i, volt_i))
-        data = {'time': time_data, 'temp': temp_data, 'volt': volt_data}
-        df = pd.DataFrame(data)
-        save_dir = os.path.join(root_dir, time.strftime('%Y%m%d_%H-%M-%S'))
-        setup_dirs(save_dir)
-        df.to_csv(os.path.join(save_dir, 'y.csv'), index=False)
-        plot_lines(save_dir, xvar='time', yvar='temp', xlabel='Time', ylabel='Temperature')
-        plot_lines(save_dir, xvar='time', yvar='volt', xlabel='Time', ylabel='Voltage')
+        
